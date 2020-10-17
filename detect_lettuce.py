@@ -62,7 +62,8 @@ def get_args():
                         help='Scan date',
                         metavar='date',
                         type=str,
-                        action='store_true')
+                        default=None,
+                        required=True)
 
     return parser.parse_args()
 
@@ -226,9 +227,8 @@ def main():
                                                                     'se_lat',
                                                                     'se_lon',
                                                                     'plant_area_m2']).set_index('date')
-    out_path = os.path.join(args.outdir, f'{date}_detection.csv')
+    out_path = os.path.join(args.outdir, f'{args.date}_detection.csv')
     df.to_csv(out_path)
-
 
 
 # --------------------------------------------------
