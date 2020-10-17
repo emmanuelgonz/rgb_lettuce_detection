@@ -9,7 +9,7 @@ import argparse
 import os
 import sys
 from detecto import core, utils, visualize
-import random 
+import random
 import glob
 import matplotlib.pyplot as plt
 import tifffile as tifi
@@ -18,6 +18,7 @@ from osgeo import gdal
 import pyproj
 import utm
 import json
+import pandas as pd
 
 
 # --------------------------------------------------
@@ -38,13 +39,13 @@ def get_args():
                         help='GeoJSON containing plot boundaries',
                         metavar='str',
                         type=str,
-                        default=None, 
+                        default=None,
                         required=True)
 
     parser.add_argument('-m',
                         '--model',
                         help='Trained model file',
-                        metavar='str',
+                        metavar='model',
                         type=str,
                         default=None,
                         required=True)
@@ -52,13 +53,16 @@ def get_args():
     parser.add_argument('-o',
                         '--outdir',
                         help='Output directory',
-                        metavar='str',
+                        metavar='outdir',
+                        type=str,
                         default='detect_out')
 
-    # parser.add_argument('-o',
-    #                     '--on',
-    #                     help='A boolean flag',
-    #                     action='store_true')
+    parser.add_argument('-d',
+                        '--date',
+                        help='Scan date',
+                        metavar='date',
+                        type=str,
+                        action='store_true')
 
     return parser.parse_args()
 
@@ -72,55 +76,49 @@ def get_trt_zones():
     for i in range(3, 19):
         for i2 in range(2, 48):
             plot = f'MAC_Field_Scanner_Season_10_Range_{i}_Column_{i2}'
-            #print(plot)
             trt_zone_1.append(str(plot))
 
     for i in range(20, 36):
         for i2 in range(2, 48):
             plot = f'MAC_Field_Scanner_Season_10_Range_{i}_Column_{i2}'
-            #print(plot)
             trt_zone_2.append(str(plot))
 
     for i in range(37, 53):
         for i2 in range(2, 48):
             plot = f'MAC_Field_Scanner_Season_10_Range_{i}_Column_{i2}'
-            #print(plot)
             trt_zone_3.append(str(plot))
-            
+
     return trt_zone_1, trt_zone_2, trt_zone_3
 
 
 # --------------------------------------------------
 def find_trt_zone(plot_name):
-    
     trt_zone_1, trt_zone_2, trt_zone_3 = get_trt_zones()
-    #print(trt_zone_1)
-    
+
     if plot_name in trt_zone_1:
         trt = 'treatment 1'
-        
+
     elif plot_name in trt_zone_2:
         trt = 'treatment 2'
-        
+
     elif plot_name in trt_zone_3:
         trt = 'treatment 3'
-        
+
     else:
         trt = 'border'
-        
+
     return trt
 
 
 # --------------------------------------------------
 def get_genotype(plot, geojson):
-    #with open('/home/emmanuelgonzalez/work/ml/ml_code/test.geojson') as f:
     with open(geojson) as f:
         data = json.load(f)
 
     for feat in data['features']:
         if feat.get('properties')['ID']==plot:
             genotype = feat.get('properties').get('genotype')
-    
+
     return genotype
 
 
@@ -139,14 +137,14 @@ def get_image_data(img):
     image = tifi.imread(img)
     copy = image.copy()
     array = np.array(image)
-    
+
     return image, copy, array
 
 
 # --------------------------------------------------
 def get_min_max(box):
     min_x, min_y, max_x, max_y = int(box[0]), int(box[1]), int(box[2]), int(box[3])
-    
+
     return min_x, min_y, max_x, max_y
 
 
@@ -163,18 +161,14 @@ def main():
         os.makedirs(args.outdir)
 
     for img in args.image_list:
-        print(img)
+        print(f'Image: {img}')
 
         og_image, copy, array = get_image_data(img)
         plot = img.split('/')[-1].replace('_ortho.tif', '')
         trt_zone = find_trt_zone(plot)
         plot_name = plot.replace('_', ' ')
         genotype = get_genotype(plot_name, args.geojson)
-        
-        print(plot)
-        print(trt_zone)
-        print(genotype, '\n')
-        
+
         # Get predictions and bounding boxes
         predictions = model.predict(array)
         labels, boxes, scores = predictions
@@ -187,30 +181,54 @@ def main():
                 area = (max_x - min_x) * (max_y - min_y)
                 nw_lat, nw_lon = pixel2geocoord(img, min_x, max_y)
                 se_lat, se_lon = pixel2geocoord(img, max_x, min_y)
-                
+
                 nw_e, nw_n, _, _ = utm.from_latlon(nw_lat, nw_lon, 12, 'N')
                 se_e, se_n, _, _ = utm.from_latlon(se_lat, se_lon, 12, 'N')
-                
+
                 area = (se_e - nw_e) * (se_n - nw_n)
                 print(area)
                 lat, lon = pixel2geocoord(img, center_x, center_y)
                 start_point = (min_x, max_y)
                 end_point = (max_x, min_y)
-                color = (255, 0, 0) 
+                color = (255, 0, 0)
                 thickness = 6
-                
-                # #new_img = og_image[min_y:max_y, min_x:max_x, :]
 
-                #cv2.rectangle(copy, start_point, end_point, color, thickness)
                 lett_dict[cont_cnt] = {
+                    'date': args.date,
                     'treatment': trt_zone,
                     'plot': plot,
                     'genotype': genotype,
                     'lon': lon,
-                    'lat': lat, 
+                    'lat': lat,
+                    'min_x': min_x,
+                    'max_x': max_x,
+                    'min_y': min_y,
+                    'max_y': max_y,
+                    'nw_lat': nw_lat,
+                    'nw_lon': nw_lon,
+                    'se_lat': se_lat,
+                    'se_lon': se_lon,
                     'bounding_area_m2': area
                 }
-    
+
+    df = pd.DataFrame.from_dict(lett_dict, orient='index', columns=['date',
+                                                                    'treatment',
+                                                                    'plot',
+                                                                    'genotype',
+                                                                    'lon',
+                                                                    'lat',
+                                                                    'min_x',
+                                                                    'max_x',
+                                                                    'min_y',
+                                                                    'max_y',
+                                                                    'nw_lat',
+                                                                    'nw_lon',
+                                                                    'se_lat',
+                                                                    'se_lon',
+                                                                    'plant_area_m2']).set_index('date')
+    out_path = os.path.join(args.outdir, f'{date}_detection.csv')
+    df.to_csv(out_path)
+
 
 
 # --------------------------------------------------
