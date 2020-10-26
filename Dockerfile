@@ -6,6 +6,9 @@ COPY . /opt
 USER root
 
 RUN apt-get update
+RUN apt-get install 'ffmpeg'\
+    'libsm6'\ 
+    'libxext6'  -y
 RUN apt-get install -y python3.6-dev \
                        python3-pip \
                        wget \
