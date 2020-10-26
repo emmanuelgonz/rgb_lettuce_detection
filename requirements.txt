@@ -6,3 +6,4 @@ tifffile
 matplotlib
 opencv-python
 detecto
+imagecodecs
