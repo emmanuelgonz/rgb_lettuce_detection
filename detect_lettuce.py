@@ -12,7 +12,6 @@ from detecto import core, utils, visualize
 import random 
 import glob
 import matplotlib.pyplot as plt
-import cv2
 import tifffile as tifi
 import numpy as np
 from osgeo import gdal

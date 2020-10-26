@@ -2,7 +2,6 @@ GDAL==3.0.4
 numpy==1.19.1
 pyproj
 utm
-opencv-python
 tifffile
 scipy
 matplotlib
