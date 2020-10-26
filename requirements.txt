@@ -3,8 +3,5 @@ numpy==1.19.1
 pyproj
 utm
 tifffile
-scipy
 matplotlib
-laspy
-terrautils
 detecto
