@@ -186,13 +186,7 @@ def main():
                 se_e, se_n, _, _ = utm.from_latlon(se_lat, se_lon, 12, 'N')
 
                 area_sq = (se_e - nw_e) * (se_n - nw_n)
-                print(area)
                 lat, lon = pixel2geocoord(img, center_x, center_y)
-                start_point = (min_x, max_y)
-                end_point = (max_x, min_y)
-                color = (255, 0, 0)
-                thickness = 6
-
                 lett_dict[cont_cnt] = {
                     'date': args.date,
                     'treatment': trt_zone,
