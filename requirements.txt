@@ -1,0 +1,7 @@
+GDAL==3.0.4
+numpy==1.19.1
+scipy
+matplotlib
+laspy
+terrautils
+detecto
