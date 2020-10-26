@@ -18,6 +18,7 @@ RUN apt-get install -y python3.6-dev \
 RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable
 RUN apt-get update
 RUN apt-get install -y libgdal-dev
+RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
 RUN wget http://download.osgeo.org/libspatialindex/spatialindex-src-1.7.1.tar.gz
 RUN tar -xvf spatialindex-src-1.7.1.tar.gz
