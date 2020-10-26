@@ -4,4 +4,5 @@ pyproj
 utm
 tifffile
 matplotlib
+opencv-python
 detecto
