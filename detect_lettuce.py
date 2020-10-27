@@ -29,9 +29,9 @@ def get_args():
         description='Lettuce detection',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('image_list',
-                        nargs='+',
-                        metavar='image_list',
+    parser.add_argument('dir',
+                        #nargs='+',
+                        metavar='Directory containing geoTIF images',
                         help='Plotclip output directory')
 
     parser.add_argument('-g',
@@ -161,7 +161,7 @@ def main():
     if not os.path.isdir(args.outdir):
         os.makedirs(args.outdir)
 
-    for img in args.image_list:
+    for img in glob.glob(f'{args.dir}/*.tif'):
         print(f'Image: {img}')
 
         og_image, copy, array = get_image_data(img)
