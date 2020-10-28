@@ -5,6 +5,7 @@ utm
 tifffile
 matplotlib
 opencv-python
+tqdm
 detecto
 imagecodecs
 pandas
