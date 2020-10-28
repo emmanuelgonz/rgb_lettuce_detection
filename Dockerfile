@@ -6,9 +6,6 @@ COPY . /opt
 USER root
 
 RUN apt-get update
-RUN apt-get install 'ffmpeg'\
-    'libsm6'\ 
-    'libxext6'  -y
 RUN apt-get install -y python3.6-dev \
                        python3-pip \
                        wget \
@@ -17,7 +14,11 @@ RUN apt-get install -y python3.6-dev \
                        libspatialindex-dev \
                        build-essential \
                        software-properties-common \
-                       apt-utils
+                       apt-utils \
+                       ffmpeg \
+                       libsm6 \
+                       libxext6
+                       
 RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable
 RUN apt-get update
 RUN apt-get install -y libgdal-dev
@@ -30,6 +31,8 @@ RUN ldconfig
 RUN add-apt-repository ppa:ubuntugis/ppa
 RUN export CPLUS_INCLUDE_PATH=/usr/include/gdal
 RUN export C_INCLUDE_PATH=/usr/include/gdal
+RUN apt-get install -y locales && locale-gen en_US.UTF-8
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 ENTRYPOINT [ "/usr/bin/python3", "/opt/detect_lettuce.py" ]
 
